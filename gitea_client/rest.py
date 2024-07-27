@@ -83,7 +83,12 @@ class RESTClientObject(object):
 
         # https pool manager
         if configuration.proxy:
-            self.pool_manager = urllib3.ProxyManager(
+            if configuration.proxy.startswith("http"):
+                ProxyManager = urllib3.ProxyManager
+            else:
+                from urllib3.contrib.socks import SOCKSProxyManager
+                ProxyManager = SOCKSProxyManager
+            self.pool_manager = ProxyManager(
                 num_pools=pools_size,
                 maxsize=maxsize,
                 cert_reqs=cert_reqs,
