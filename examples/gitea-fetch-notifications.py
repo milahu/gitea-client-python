@@ -15,6 +15,7 @@
 
 
 import os
+import re
 import sys
 import json
 import logging
@@ -77,7 +78,11 @@ def main():
         if remote.get("enabled") == False:
             continue
 
-        client = GiteaClient(remote)
+        try:
+            client = GiteaClient(remote)
+        except Exception as exc:
+            print(remote["name"] + f": error: {type(exc).__name__}: {str(exc)}")
+            continue
 
         print(remote["name"] + ": info: fetching notifications")
         try:
@@ -108,6 +113,8 @@ class GiteaClient:
 
         self.config.host = urllib.parse.urljoin(remote["url"], "/api/v1")
 
+        assert self.is_valid_token(remote["token"]), "invalid token: " + repr(remote["token"])
+
         self.config.api_key["token"] = remote["token"]
 
         #self.config.debug = True
@@ -119,6 +126,9 @@ class GiteaClient:
             self.config.proxy = proxy
 
         self.client = gitea_client.api_client.ApiClient(self.config)
+
+    def is_valid_token(self, token):
+        return re.fullmatch("[0-9a-f]{40}", token) != None
 
     def get_version(self):
         "get the gitea version"
